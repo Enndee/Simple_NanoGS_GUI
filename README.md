@@ -35,15 +35,6 @@
 </p>
 
 
-## This repository (Web App)
-
-It lets you:
-
-- **Load** your own `.ply` Gaussian splat model or use built-in examples  
-- **Simplify** with configurable target ratio and merge-cap parameters  
-- **Compare** original vs. simplified splats interactively (trackball controls)  
-- **Scrub** a progress track to inspect intermediate simplification stages
-
 ## How to use
 
 Run the simplifier on a 3DGS `.ply` file:
