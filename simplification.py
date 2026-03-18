@@ -208,7 +208,7 @@ def main():
 
     ap.add_argument("--k", type=int, default=16, help="k for KNN candidates.")
     ap.add_argument("--merge_cap", type=float, default=0.5, help="Max merges per pass as ratio of original splat count (0.01–0.5).")
-    ap.add_argument("--opacity_threshold", type=float, default=0.1, help="Prune splats with opacity below this threshold before merging.")
+    ap.add_argument("--opacity_threshold", type=float, default=0.1, help="Prune splats with opacity below this before merging. Effective threshold is min(threshold, median(opacity)).")
 
     ap.add_argument("--lam_geo", type=float, default=1.0)
     ap.add_argument("--lam_sh", type=float, default=1.0)
