@@ -7,3 +7,7 @@ __pycache__/
 *.code-workspace
 gsbox.exe
 nanogs_gui_settings.json
+build/
+dist/
+release_notes*.txt
+NanoGS_GUI_v*_win64*.zip
