@@ -2,6 +2,9 @@
 
 Simple NanoGS GUI is a Windows-focused fork of the original NanoGS project for training-free Gaussian splat simplification.
 
+<img width="1455" height="1176" alt="grafik" src="https://github.com/user-attachments/assets/5f8ede6a-8d12-4e48-82fa-43d661aac681" />
+
+
 Original upstream project: https://github.com/saliteta/NanoGS
 
 Project page: https://saliteta.github.io/NanoGS/
