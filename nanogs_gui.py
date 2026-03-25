@@ -692,21 +692,21 @@ class NanoGSGui:
         ttk.Label(params_frame, text="0 = auto-tuned").grid(row=3, column=2, padx=8, pady=6, sticky="w")
         ttk.Checkbutton(
             params_frame,
-            text="Qualitaetstestmodus (~40 Varianten)",
+            text="Quality test mode (~40 variants)",
             variable=self.quality_test_mode,
         ).grid(row=4, column=0, columnspan=2, padx=8, pady=6, sticky="w")
         ttk.Label(
             params_frame,
-            text="Erzeugt eine Vergleichsmatrix um die aktuellen Werte fuer Ratio, k, Opacity und Lambda SH.",
+            text="Generates a comparison matrix around the current ratio, k, opacity threshold, and Lambda SH values.",
         ).grid(row=4, column=2, columnspan=2, padx=8, pady=6, sticky="w")
         ttk.Button(
             params_frame,
-            text="Load optimal defaults",
+            text="Load recommended defaults",
             command=self._load_optimal_defaults,
         ).grid(row=5, column=0, columnspan=2, padx=8, pady=6, sticky="w")
         ttk.Label(
             params_frame,
-            text="Laedt Ratio 0.3, k 8, Opacity 0.18, Lambda SH 0.5, Device auto.",
+            text="Loads ratio 0.3, k 8, opacity 0.18, Lambda SH 0.5, and device auto.",
         ).grid(row=5, column=2, columnspan=2, padx=8, pady=6, sticky="w")
 
         profile_frame = ttk.LabelFrame(container, text="Profile Manager")
@@ -721,7 +721,7 @@ class NanoGSGui:
         ttk.Button(profile_frame, text="Delete", command=self._delete_profile).grid(row=0, column=4, padx=8, pady=6, sticky="ew")
         ttk.Label(
             profile_frame,
-            text="Profiles speichern Parameter- und Exporteinstellungen, aber nicht Eingabedatei oder Ausgabeordner.",
+            text="Profiles store parameter and export settings, but not the selected input path or output folder.",
         ).grid(row=1, column=0, columnspan=5, padx=8, pady=(0, 6), sticky="w")
 
         converter_frame = ttk.LabelFrame(container, text="Format handling")

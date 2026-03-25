@@ -35,7 +35,7 @@ This repository keeps the upstream simplification core, then adds a practical de
 ## Requirements
 
 - Python 3.10+ on Windows.
-- `numpy`, `scipy`, `tqdm`, and `Pillow`.
+- Base dependencies listed in `requirements.txt`.
 - Optional: a CUDA-capable GPU plus a matching CuPy build for GPU cost evaluation.
 - Optional: `gsbox.exe` if you want `.spz` conversion or `.sog`/`.spz` export.
 
@@ -45,7 +45,7 @@ Example environment setup:
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install numpy scipy tqdm pillow
+python -m pip install -r requirements.txt
 ```
 
 Optional GPU backend:
@@ -55,6 +55,8 @@ python -m pip install cupy-cuda12x
 ```
 
 Use a CuPy package that matches your CUDA runtime.
+
+If you only need the CPU path, `requirements.txt` is sufficient.
 
 ## GUI workflow
 
