@@ -10,8 +10,26 @@ from utils.ply_utils import (
     read_ply,
     store_ply,
 )
-from utils.cost import full_cost_pairs
+from utils.cost import edge_costs_gpu_precomputed, gpu_backend_available, make_mc_samples, precompute_cost_state, full_cost_pairs_precomputed, warmup_gpu_backend
 from utils.merge import merge_pairs
+
+
+def resolve_block_edges(device: str, requested_block_edges: int, edge_count: int) -> int:
+    if requested_block_edges and requested_block_edges > 0:
+        return requested_block_edges
+
+    if device == "gpu":
+        if edge_count >= 400_000:
+            return 400_000
+        if edge_count >= 150_000:
+            return 200_000
+        return 100_000
+
+    if edge_count >= 400_000:
+        return 50_000
+    if edge_count >= 150_000:
+        return 75_000
+    return 50_000
 
 
 def knn_indices(means: np.ndarray, k: int) -> np.ndarray:
@@ -31,14 +49,26 @@ def edge_costs(
     op: np.ndarray,
     sh: np.ndarray,
     cp,
-    block_edges: int = 100_000,
+    block_edges: int = 0,
 ) -> np.ndarray:
     """
     Compute symmetric costs w_e for each undirected edge once.
     Returns w: (M,) float32
     """
     M = edges.shape[0]
+    state = precompute_cost_state(sc, q, op, cp)
+    device = getattr(cp, "device", "auto")
+
+    if device == "auto":
+        device = "gpu" if gpu_backend_available() else "cpu"
+
+    block_edges = resolve_block_edges(device, block_edges, M)
+
+    if device == "gpu":
+        return edge_costs_gpu_precomputed(edges, mu, sh, state, cp, block_edges)
+
     w = np.empty((M,), dtype=np.float32)
+    mc_samples = make_mc_samples(cp)
 
     for e0 in tqdm(range(0, M, block_edges), desc="Edge costs"):
         e1 = min(M, e0 + block_edges)
@@ -57,10 +87,28 @@ def edge_costs(
             sh_u = sh[u]
             sh_v = sh_u
 
-        w[e0:e1] = full_cost_pairs(
-            mu_u, sc_u, q_u, op_u, sh_u,
-            mu_v, sc_v, q_v, op_v, sh_v,
+        state_u = type(state)(
+            R=state.R[u],
+            Rt=state.Rt[u],
+            v=state.v[u],
+            invdiag=state.invdiag[u],
+            logdet=state.logdet[u],
+            weight=state.weight[u],
+        )
+        state_v = type(state)(
+            R=state.R[v],
+            Rt=state.Rt[v],
+            v=state.v[v],
+            invdiag=state.invdiag[v],
+            logdet=state.logdet[v],
+            weight=state.weight[v],
+        )
+
+        w[e0:e1] = full_cost_pairs_precomputed(
+            mu_u, sh_u, state_u,
+            mu_v, sh_v, state_v,
             cp,
+            mc_samples=mc_samples,
         ).astype(np.float32)
 
     return w
@@ -72,8 +120,8 @@ def knn_undirected_edges(nbr: np.ndarray) -> np.ndarray:
     Includes {i,j} if j in kNN(i) OR i in kNN(j) (union).
     """
     N, k = nbr.shape
-    ii = np.repeat(np.arange(N, dtype=np.int32), k)
-    jj = nbr.reshape(-1).astype(np.int32)
+    ii = np.repeat(np.arange(N, dtype=np.uint32), k)
+    jj = nbr.reshape(-1).astype(np.uint32, copy=False)
 
     u = np.minimum(ii, jj)
     v = np.maximum(ii, jj)
@@ -83,10 +131,13 @@ def knn_undirected_edges(nbr: np.ndarray) -> np.ndarray:
     u = u[mask]
     v = v[mask]
 
-    edges = np.stack([u, v], axis=1)  # (N*k, 2) with u<v
-    # unique undirected edges
-    edges = np.unique(edges, axis=0)
-    return edges.astype(np.int32)
+    packed = (u.astype(np.uint64) << np.uint64(32)) | v.astype(np.uint64)
+    packed = np.unique(packed)
+
+    edges = np.empty((packed.shape[0], 2), dtype=np.int32)
+    edges[:, 0] = (packed >> np.uint64(32)).astype(np.int32)
+    edges[:, 1] = (packed & np.uint64(0xFFFFFFFF)).astype(np.int32)
+    return edges
 
 def greedy_pairs_from_edges(
     edges: np.ndarray,   # (M,2) int32, u<v
@@ -148,6 +199,13 @@ def simplify(in_path: str, out_path: str, rp: RunParams, cp: CostParams) -> None
     print(f"Initial splats: {mu.shape[0]}")
     target = max(int(math.ceil(N0 * rp.ratio)), 1)
     print(f"Pruned splats: {N0}, target: {target}")
+    selected_device = getattr(cp, "device", "auto")
+    if selected_device == "auto":
+        selected_device = "gpu" if gpu_backend_available() else "cpu"
+    print(f"Cost device: {selected_device}")
+    if selected_device == "gpu":
+        warmup_gpu_backend()
+    configured_block_edges = getattr(cp, "block_edges", 0)
     mu, sc, q, op, sh = prune_by_opacity(mu, sc, q, op, sh, rp.opacity_threshold)
     print(f"After opacity pruning, {mu.shape[0]} splats remain.")
 
@@ -164,7 +222,9 @@ def simplify(in_path: str, out_path: str, rp: RunParams, cp: CostParams) -> None
         nbr = knn_indices(mu, k=k_eff)
 
         edges = knn_undirected_edges(nbr)
-        w = edge_costs(edges, mu, sc, q, op, sh, cp)
+        effective_block_edges = resolve_block_edges(selected_device, configured_block_edges, edges.shape[0])
+        print(f"  block_edges: {effective_block_edges}")
+        w = edge_costs(edges, mu, sc, q, op, sh, cp, block_edges=effective_block_edges)
 
         merges_needed = N - target
         P = merges_needed if merges_needed > 0 else None
@@ -210,6 +270,8 @@ def main():
 
     ap.add_argument("--lam_geo", type=float, default=1.0)
     ap.add_argument("--lam_sh", type=float, default=1.0)
+    ap.add_argument("--device", choices=["auto", "cpu", "gpu"], default="auto", help="Edge-cost backend device.")
+    ap.add_argument("--block_edges", type=int, default=0, help="Edge-cost block size. Use 0 for auto-tuned defaults.")
 
     args = ap.parse_args()
     if not (0.0 < args.ratio < 1.0):
@@ -232,6 +294,8 @@ def main():
     cp = CostParams(
         lam_geo=args.lam_geo,
         lam_sh=args.lam_sh,
+        device=args.device,
+        block_edges=args.block_edges,
     )
 
     simplify(args.ply, out_path, rp, cp)

@@ -10,3 +10,5 @@ class RunParams:
 class CostParams:
     lam_geo: float = 1.0
     lam_sh: float = 1.0
+    device: str = "auto"
+    block_edges: int = 0

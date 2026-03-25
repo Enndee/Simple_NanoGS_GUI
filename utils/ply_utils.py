@@ -243,23 +243,12 @@ def write_ply_binary_little_endian(path: str, properties: List[Tuple[str, str]],
         header.append("end_header")
         f.write(("\n".join(header) + "\n").encode("ascii"))
 
-        fmt_chars = "".join(PLY_TYPE_TO_STRUCT[pt] for pt, _ in properties)
-        st = struct.Struct("<" + fmt_chars)
+        dtype_fields = [(name, PLY_TYPE_TO_DTYPE[pt]) for pt, name in properties]
+        structured = np.empty(n, dtype=np.dtype(dtype_fields))
 
-        # Ensure contiguous arrays and correct dtypes
-        arrays = []
         for pt, name in properties:
             dt = PLY_TYPE_TO_DTYPE[pt]
-            arr = np.asarray(cols[name])
-            if arr.dtype != dt:
-                arr = arr.astype(dt, copy=False)
-            arrays.append(np.ascontiguousarray(arr))
+            structured[name] = np.asarray(cols[name], dtype=dt)
 
-        # Pack row-by-row (fast enough; avoids huge intermediate structured arrays)
-        # If you need more speed, you can build a structured array and tofile().
-        for i in range(n):
-            row = [arrays[k][i] for k in range(len(arrays))]
-            # Convert numpy scalars to python scalars for struct
-            row = [x.item() if isinstance(x, np.generic) else x for x in row]
-            f.write(st.pack(*row))
+        structured.tofile(f)
 

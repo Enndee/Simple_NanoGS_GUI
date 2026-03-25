@@ -1,3 +1,9 @@
 *.pyc
 *.ply
 .vscode
+.venv/
+__pycache__/
+*.log
+*.code-workspace
+gsbox.exe
+nanogs_gui_settings.json
