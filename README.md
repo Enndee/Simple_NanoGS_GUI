@@ -4,7 +4,11 @@ Simple NanoGS GUI is a Windows-focused fork of the original NanoGS project for t
 
 Original upstream project: https://github.com/saliteta/NanoGS
 
-This fork keeps the core simplification pipeline, then adds a desktop batch workflow and format-conversion helpers that were not present in the upstream repository.
+Project page: https://saliteta.github.io/NanoGS/
+
+This repository keeps the upstream simplification core, then adds a practical desktop workflow and format-conversion tooling for local batch use.
+
+![NanoGS teaser](teaser.png)
 
 ## What changed compared to the original repo
 
@@ -12,11 +16,12 @@ This fork keeps the core simplification pipeline, then adds a desktop batch work
 - Added saved parameter profiles and persisted local GUI settings.
 - Added support for `.sog` input by decoding it to a temporary `.ply` file in Python.
 - Added `.spz` and `.sog` round-trip export support through `gsbox.exe`.
-- Added a quality-test mode that generates a comparison matrix around the current settings and writes a CSV manifest.
+- Added a quality-test mode that generates about 40 nearby parameter variants and writes a CSV manifest.
 - Added CPU/GPU selection for cost evaluation with automatic backend choice.
 - Added automatic `block_edges` tuning plus a manual override for large scenes.
 - Added benchmark scripts for backend and block-size tuning.
 - Added a Windows launcher batch file for the GUI.
+- Extended the CLI with `--device` and `--block_edges`.
 
 ## Repository contents
 
@@ -111,3 +116,11 @@ They expect local benchmark `.ply` files and are intended as developer utilities
 - `nanogs_gui_settings.json` is generated locally and is intentionally ignored.
 - Benchmark logs, virtual environments, and workspace files are also ignored.
 - This repository is intended as a practical GUI fork of NanoGS rather than a mirror of the upstream paper repository.
+
+## Citation
+
+If the original NanoGS project helps your work, please cite the paper in `CITATION.bib`.
+
+## License
+
+See `LICENSE` in this repository.

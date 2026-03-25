@@ -209,9 +209,8 @@ def simplify(in_path: str, out_path: str, rp: RunParams, cp: CostParams) -> None
     mu, sc, q, op, sh = prune_by_opacity(mu, sc, q, op, sh, rp.opacity_threshold)
     print(f"After opacity pruning, {mu.shape[0]} splats remain.")
 
-
     iteration = 0
-    
+
     while True:
         if mu.shape[0] <= target:
             break
