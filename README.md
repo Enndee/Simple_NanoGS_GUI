@@ -30,6 +30,7 @@ This repository keeps the upstream simplification core, then adds a practical de
 
 - `nanogs_gui.py`: desktop GUI for running simplification jobs.
 - `simplification.py`: CLI entry point and simplification pipeline.
+- `install_gpu_support.bat`: Windows helper that installs CuPy into `.venv` for source-mode GPU execution.
 - `utils/sog_utils.py`: `.sog` decoder and conversion to `.ply`.
 - `benchmark_block_edges.py`: compare runtime across block sizes and devices.
 - `benchmark_device_threshold.py`: compare CPU and GPU behavior across scene sizes.
@@ -58,6 +59,14 @@ python -m pip install cupy-cuda12x
 ```
 
 Use a CuPy package that matches your CUDA runtime.
+
+On Windows, you can also run:
+
+```powershell
+install_gpu_support.bat
+```
+
+That script creates `.venv` if needed, installs `requirements.txt`, prompts for the matching CuPy package, and verifies CUDA device access.
 
 If you only need the CPU path, `requirements.txt` is sufficient.
 
